@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
-class TopBar extends StatelessWidget {
-  const TopBar({Key? key}) : super(key: key);
+class TopBar extends StatefulWidget {
+  final Function(String)? onSearch;
+
+  const TopBar({Key? key, this.onSearch}) : super(key: key);
+
+  @override
+  _TopBarState createState() => _TopBarState();
+}
+
+class _TopBarState extends State<TopBar> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +60,21 @@ class TopBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: _searchController,
+        onChanged: widget.onSearch,
         decoration: InputDecoration(
           hintText: 'Search...',
           prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: Colors.grey[500]),
+                  onPressed: () {
+                    _searchController.clear();
+                    widget.onSearch?.call('');
+                    setState(() {});
+                  },
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
@@ -85,28 +114,76 @@ class TopBar extends StatelessWidget {
   }
 
   Widget _buildProfileSection() {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundImage: const AssetImage('assets/images/profile.jpg'),
-          backgroundColor: Colors.grey,
-          onBackgroundImageError: (exception, stackTrace) {
-            // Gérer l'erreur silencieusement
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        return PopupMenuButton<String>(
+          onSelected: (value) {
+            switch (value) {
+              case 'profile':
+                // TODO: Naviguer vers le profil
+                break;
+              case 'settings':
+                // TODO: Naviguer vers les paramètres
+                break;
+              case 'logout':
+                authProvider.logout();
+                break;
+            }
           },
-          child: const Text(
-            'M',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          itemBuilder: (context) => [
+            const PopupMenuItem<String>(
+              value: 'profile',
+              child: Row(
+                children: [
+                  Icon(Icons.person, size: 16),
+                  SizedBox(width: 8),
+                  Text('Profil'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'settings',
+              child: Row(
+                children: [
+                  Icon(Icons.settings, size: 16),
+                  SizedBox(width: 8),
+                  Text('Paramètres'),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(Icons.logout, size: 16, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Déconnexion', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ],
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFF6366F1),
+                child: const Text(
+                  'M',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Maxbert',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(width: 4),
+              const Icon(Icons.keyboard_arrow_down, size: 16),
+            ],
           ),
-        ),
-        const SizedBox(width: 8),
-        const Text(
-          'Maxbert',
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(width: 4),
-        const Icon(Icons.keyboard_arrow_down, size: 16),
-      ],
+        );
+      },
     );
   }
 }

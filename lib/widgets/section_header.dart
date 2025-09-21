@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 
-class SectionHeader extends StatelessWidget {
+class SectionHeader extends StatefulWidget {
   final String title;
+  final VoidCallback? onAddPressed;
+  final Function(String)? onSearch;
 
   const SectionHeader({
     Key? key,
     required this.title,
+    this.onAddPressed,
+    this.onSearch,
   }) : super(key: key);
+
+  @override
+  _SectionHeaderState createState() => _SectionHeaderState();
+}
+
+class _SectionHeaderState extends State<SectionHeader> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +34,7 @@ class SectionHeader extends StatelessWidget {
         children: [
           // Title
           Text(
-            title,
+            widget.title,
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w700,
@@ -30,7 +47,7 @@ class SectionHeader extends StatelessWidget {
             children: [
               _buildSearchField(),
               const SizedBox(width: 16),
-              _buildAddButton(),
+              if (widget.onAddPressed != null) _buildAddButton(),
             ],
           ),
         ],
@@ -46,9 +63,21 @@ class SectionHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: _searchController,
+        onChanged: widget.onSearch,
         decoration: InputDecoration(
-          hintText: 'Search ${title.toLowerCase()}',
+          hintText: 'Search ${widget.title.toLowerCase()}',
           prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: Colors.grey[500]),
+                  onPressed: () {
+                    _searchController.clear();
+                    widget.onSearch?.call('');
+                    setState(() {});
+                  },
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
@@ -57,25 +86,18 @@ class SectionHeader extends StatelessWidget {
   }
 
   Widget _buildAddButton() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF6366F1),
-        borderRadius: BorderRadius.circular(12),
+    return ElevatedButton.icon(
+      onPressed: widget.onAddPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF6366F1),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.add, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            'Add $title',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+      icon: const Icon(Icons.add, size: 20),
+      label: Text('Add ${widget.title}'),
     );
   }
 }
